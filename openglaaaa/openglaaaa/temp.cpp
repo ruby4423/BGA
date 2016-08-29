@@ -80,15 +80,17 @@ void display()
 	//	}
 	//}
 	//glEnd();
-	glBegin(GL_TRIANGLES);
+	glBegin(GL_TRIANGLE_STRIP);
 	float pi = acos(-1);
+	
 	int max = 12;
 	//구면 좌표계(i = theta, j = phi)
 	for (float i = 0; i <= max; i++)
 	{
 		for (float j = 0; j <= max; j++)
 		{
-			glVertex3f(cosf(j*pi*2/max)*sinf(i*pi * 2 / max), sinf(j*pi * 2 / max)*sinf(i*pi * 2 / max), cosf(i*pi*2/max));
+			glColor3f(i/max, j/max, 1);
+			glVertex3f(cosf(i*pi*2/max)*sinf(j*pi * 2 / max), sinf(j*pi * 2 / max)*sinf(i*pi * 2 / max), cosf(j*pi*2/max));
 		}
 	}
 	glEnd();

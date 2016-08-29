@@ -4,10 +4,13 @@
 #include "stdafx.h"
 #include "directx.h"
 #include <d3d9.h>
+#include <d3dx9.h>
 
-LPDIRECT3D9 g_pD3D = NULL;
+LPDIRECT3D9 g_pD3D = NULL;//LP(포인터)
 LPDIRECT3DDEVICE9 g_pD3DDevice = NULL; //하드웨어 제어, 디바이스 메모리
 LPDIRECT3DVERTEXBUFFER9 g_pVertexBuffer = NULL;
+LPD3DXMESH g_pMesh = NULL;//모델의 포인터
+//BYTE, WORD, DWORD 데이터형
 
 struct MY_VERTEX //점 데이터형
 {
@@ -34,23 +37,71 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 HRESULT initVertexBuffer()
 {
-	VOID* pVertices;
-	MY_VERTEX ver[] =
+	//VOID* pVertices;
+	//MY_VERTEX ver[] =
+	//{
+	//	//{300.0f, 300.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(255, 0, 0)},
+	//	{240.0f, 196.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(0, 255, 0) },
+	//	{360.0f, 196.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(0, 0, 255)},
+	//	{180.0f, 300.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(255, 255, 255) },
+	//	{420.0f, 300.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(0, 0, 0)},
+	//	{240.0f, 404.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(255, 255, 0) },
+	//	{360.0f, 404.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(0, 255, 255) }
+	//};
+	//g_pD3DDevice->CreateVertexBuffer(sizeof(MY_VERTEX) * 6, 0, D3DFVF_MYVERTEX, D3DPOOL_DEFAULT,
+	//	&g_pVertexBuffer, NULL);//그래픽카드에 써줘야됨
+	//g_pVertexBuffer->Lock(0, sizeof(ver), &pVertices, 0); //그래픽카드 메모리 가져와서 락 pVertices에 저장
+	//memcpy(pVertices, ver, sizeof(ver));
+	//g_pVertexBuffer->Unlock();
+	//return S_OK;
+	//return D3DXCreateTeapot(g_pD3DDevice, &g_pMesh, NULL);//주전자
+	return D3DXCreateSphere(g_pD3DDevice, 1.0f, 50, 50, &g_pMesh, NULL);
+	//return D3DXCreateBox(g_pD3DDevice, 1.0f, 1.0f, 1.0f, &g_pMesh, NULL);
+}
+
+void makeCamera()
+{
+	D3DXMATRIX matView;//
+	D3DXMatrixLookAtLH(&matView, &D3DXVECTOR3(0, 50, -150.0f), 
+								&D3DXVECTOR3(0, 0, 0), 
+								&D3DXVECTOR3(0, 1, 0));
+	g_pD3DDevice->SetTransform(D3DTS_VIEW, &matView);//행렬투영(VIEW(카메라), PROJECTION(카메라설정), WORLD(월드좌표))
+	
+	D3DXMATRIX matProj;
+	D3DXMatrixPerspectiveFovLH(&matProj, D3DX_PI / 4, 4/3, 1.0f, 500.0f);//
+	g_pD3DDevice->SetTransform(D3DTS_PROJECTION, &matProj);
+}
+
+D3DXMATRIX SetPosition(float trans, float rotate1, float rotate2, float scale, D3DXMATRIX* matC)
+{
+	D3DXMATRIX matResult, matWorld, matRotate1, matRotate2, matScale;
+	D3DXMatrixIdentity(&matResult);
+	//행렬곱셈 순서중요
+	if (scale > 0)
 	{
-		//{300.0f, 300.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(255, 0, 0)},
-		{240.0f, 196.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(0, 255, 0) },
-		{360.0f, 196.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(0, 0, 255)},
-		{180.0f, 300.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(255, 255, 255) },
-		{420.0f, 300.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(0, 0, 0)},
-		{240.0f, 404.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(255, 255, 0) },
-		{360.0f, 404.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(0, 255, 255) }
-	};
-	g_pD3DDevice->CreateVertexBuffer(sizeof(MY_VERTEX) * 6, 0, D3DFVF_MYVERTEX, D3DPOOL_DEFAULT,
-		&g_pVertexBuffer, NULL);//그래픽카드에 써줘야됨
-	g_pVertexBuffer->Lock(0, sizeof(ver), &pVertices, 0); //그래픽카드 메모리 가져와서 락 pVertices에 저장
-	memcpy(pVertices, ver, sizeof(ver));
-	g_pVertexBuffer->Unlock();
-	return S_OK;
+		D3DXMatrixScaling(&matScale, scale, scale, scale);
+		D3DXMatrixMultiply(&matResult, &matScale, &matResult);
+	}
+	if (rotate1 != 0)
+	{
+		D3DXMatrixRotationY(&matRotate1, GetTickCount() / rotate1);//라디안기준
+		D3DXMatrixMultiply(&matResult, &matRotate1, &matResult);
+	}
+	D3DXMatrixTranslation(&matWorld, trans, 0, 0);
+	D3DXMatrixMultiply(&matWorld, &matResult, &matWorld);
+	if (rotate2 != 0)
+	{
+		D3DXMatrixRotationY(&matRotate2, GetTickCount() / rotate2);//라디안기준
+		D3DXMatrixMultiply(&matWorld, &matWorld, &matRotate2);
+	}
+	if (matC != NULL)
+	{
+		D3DXMatrixMultiply(&matWorld, &matWorld, matC);
+	}
+
+	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+	//D3DXMatrixTranslation(&matWorld, 5, 0, 0);
+	return matWorld;
 }
 
 void Render()
@@ -60,11 +111,35 @@ void Render()
 
 	g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET,
 		D3DCOLOR_XRGB(0, 0, 0), 1.0f, 2);
+	
 	g_pD3DDevice->BeginScene();//
 
-	g_pD3DDevice->SetStreamSource(0, g_pVertexBuffer, 0, sizeof(MY_VERTEX));//소스
-	g_pD3DDevice->SetFVF(D3DFVF_MYVERTEX);//포맷
-	g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 4);//그리기
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+	makeCamera();
+
+	D3DXMATRIX temp;
+	float rotate = -2000;
+	//위치, 자전, 공전, 크기, 이전값
+	SetPosition(0, 0, 0, 4, nullptr);
+	g_pMesh->DrawSubset(0);//태양
+	SetPosition(7, 0, rotate, 1, nullptr);
+	g_pMesh->DrawSubset(0);//수
+	SetPosition(14, 0, rotate, 1.5, nullptr);
+	g_pMesh->DrawSubset(0);//금
+	temp=SetPosition(21, 500, rotate, 2, nullptr);
+	g_pMesh->DrawSubset(0);//지
+	SetPosition(1.7, 0, 0, 0.3, &temp);
+	g_pMesh->DrawSubset(0);//달, 지구 자전 영향받음
+	SetPosition(28, 0, rotate, 2, nullptr);
+	g_pMesh->DrawSubset(0);//화
+	SetPosition(42, 0, rotate, 3, nullptr);
+	g_pMesh->DrawSubset(0);//목
+	SetPosition(56, 0, rotate, 3, nullptr);
+	g_pMesh->DrawSubset(0);//토
+
+	//g_pD3DDevice->SetStreamSource(0, g_pVertexBuffer, 0, sizeof(MY_VERTEX));//소스
+	//g_pD3DDevice->SetFVF(D3DFVF_MYVERTEX);//포맷
+	//g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 4);//그리기
 
 	g_pD3DDevice->EndScene();//
 	g_pD3DDevice->Present(0, 0, 0, 0);
@@ -97,7 +172,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	g_pD3D->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &d3ddm);
 	D3DPRESENT_PARAMETERS d3dpp;
 	memset(&d3dpp, 0, sizeof(d3dpp));//메모리 초기화
-	//ZeroMemory(&d3dpp, sizeof(d3dpp));
+	//ZeroMemory(&d3dpp, sizeof(d3dpp));//동일
 	d3dpp.Windowed = TRUE;
 	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;//화면 갱신방법(버림)
 	d3dpp.BackBufferFormat = d3ddm.Format;
@@ -171,7 +246,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+      CW_USEDEFAULT, 0, 800, 600, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
