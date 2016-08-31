@@ -80,7 +80,7 @@ void display()
 	//	}
 	//}
 	//glEnd();
-	glBegin(GL_TRIANGLE_STRIP);
+	glBegin(GL_LINE_STRIP);
 	float pi = acos(-1);
 	
 	int max = 12;
@@ -90,7 +90,15 @@ void display()
 		for (float j = 0; j <= max; j++)
 		{
 			glColor3f(i/max, j/max, 1);
-			glVertex3f(cosf(i*pi*2/max)*sinf(j*pi * 2 / max), sinf(j*pi * 2 / max)*sinf(i*pi * 2 / max), cosf(j*pi*2/max));
+			glVertex3f(cosf(i * pi * 2 / max)*sinf(j * pi * 2 / max), sinf(j * pi * 2 / max)*sinf(i*pi * 2 / max), cosf(j*pi*2/max));
+		}
+	}
+	for (float j = 0; j <= max; j++)
+	{
+		for (float i = 0; i <= max; i++)
+		{
+			glColor3f(i / max, j / max, 1);
+			glVertex3f(sinf(i * pi * 2 / max)*sinf(j * pi * 2 / max), cosf(i*pi * 2 / max), cosf(j * pi * 2 / max)*sinf(i * pi * 2 / max));
 		}
 	}
 	glEnd();

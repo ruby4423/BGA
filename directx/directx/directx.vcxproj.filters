@@ -30,12 +30,48 @@
     <ClInclude Include="directx.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Cuboid.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SphereCreator.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Sphere.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Base.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Circle.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="directxx.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Cuboid.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SphereCreator.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Sphere.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Base.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Circle.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -49,6 +85,18 @@
       <Filter>리소스 파일</Filter>
     </Image>
     <Image Include="directx.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="water.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="1.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="Grass.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="solar\sun.bmp">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>

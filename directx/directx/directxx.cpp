@@ -5,11 +5,22 @@
 #include "directx.h"
 #include <d3d9.h>
 #include <d3dx9.h>
+#include "Cuboid.h"
+#include "Terrain.h"
+#include "Sphere.h"
+#include "Circle.h"
 
 LPDIRECT3D9 g_pD3D = NULL;//LP(포인터)
 LPDIRECT3DDEVICE9 g_pD3DDevice = NULL; //하드웨어 제어, 디바이스 메모리
 LPDIRECT3DVERTEXBUFFER9 g_pVertexBuffer = NULL;
 LPD3DXMESH g_pMesh = NULL;//모델의 포인터
+D3DMATERIAL9 g_material;
+CCuboid* g_pCube = NULL;
+CTerrain* g_pTerrain = NULL;
+CSphere* g_pSphere[10];
+float zValue = 1.0f;
+float xValue = 0.0f;
+CCircle* g_pCircle = NULL;
 //BYTE, WORD, DWORD 데이터형
 
 struct MY_VERTEX //점 데이터형
@@ -54,15 +65,89 @@ HRESULT initVertexBuffer()
 	//memcpy(pVertices, ver, sizeof(ver));
 	//g_pVertexBuffer->Unlock();
 	//return S_OK;
+	
+	g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);//zbuffer
+	//g_pD3DDevice->set
+	//////////LIGHT///////
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, TRUE);//빛
+	g_pD3DDevice->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(32, 32, 32));
+	D3DLIGHT9 light;
+	memset(&light, 0, sizeof(light));//구조체 메모리 초기화
+	//DIRECTIONAL방향만 존재//POINT위치감쇠//SPOT감쇠방향위치각도
+	light.Type = D3DLIGHT_POINT;//FORCE 안씀
+	light.Diffuse.r = 5.0f;
+	light.Diffuse.g = 5.0f;
+	light.Diffuse.b = 5.0f;
+
+	light.Ambient.r = 0.2f;
+	light.Ambient.g = 0.2f;
+	light.Ambient.b = 0.2f;
+
+	light.Specular.r = 1.0f;
+	light.Specular.g = 1.0f;
+	light.Specular.b = 1.0f;
+
+	//light.Direction.x = 0.0f;
+	//light.Direction.y = -1.0f;
+	//light.Direction.z = 1.0f;
+	light.Position.x = 0.0f;//
+	light.Position.y = 0.0f;
+	light.Position.z = 0.0f;
+
+	light.Attenuation0 = 1.0f;
+	light.Attenuation1 = 0.05f;
+	light.Attenuation2 = 0.0f;
+	light.Range = 100.0f;
+	//light.Phi = D3DX_PI*2;
+	//light.Theta = D3DX_PI / 2.0f;
+	//light.Falloff = D3DX_PI;
+
+	g_pD3DDevice->SetLight(0, &light);
+	g_pD3DDevice->LightEnable(0, TRUE);
+	//////////LIGHT////////////////
+	D3DCOLORVALUE dif = { 1.0f, 1.0f, 1.0f, 0.0f };
+	D3DCOLORVALUE amb = { 1.0f, 1.0f, 1.0f, 0.0f };
+	D3DCOLORVALUE spe = { 1.0f, 1.0f, 1.0f, 0.0f };
+	D3DCOLORVALUE emi = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	g_material.Diffuse = dif;//반사하는 색상
+	g_material.Ambient = amb;
+	g_material.Specular = spe;
+	g_material.Power = 0;//스펙큘러 세기
+	D3DXCreateTorus(g_pD3DDevice, 0.1f, 1.5f, 3, 50, &g_pMesh, NULL);
+
 	//return D3DXCreateTeapot(g_pD3DDevice, &g_pMesh, NULL);//주전자
-	return D3DXCreateSphere(g_pD3DDevice, 1.0f, 50, 50, &g_pMesh, NULL);
+	//return D3DXCreateSphere(g_pD3DDevice, 1.0f, 50, 50, &g_pMesh, NULL);
 	//return D3DXCreateBox(g_pD3DDevice, 1.0f, 1.0f, 1.0f, &g_pMesh, NULL);
+	//g_pCube = new CCuboid(g_pD3DDevice);
+	//g_pCube->SetSize(2, 2, 2);
+	//g_pCube->SetTexture("1.bmp");
+
+	//g_pTerrain = new CTerrain(g_pD3DDevice, 20, 20, 10.0f, 15);
+	//g_pTerrain->SetTexture("Grass.bmp");
+	for(int i=0;i<10;i++)
+		g_pSphere[i] = new CSphere(g_pD3DDevice, 20, 20);
+	g_pSphere[0]->SetTexture("sun.bmp");
+	g_pSphere[0]->SetMaterial({ 1.0f, 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 0.0f }, 0.1f);
+	g_pSphere[1]->SetTexture("mercury.bmp");
+	g_pSphere[2]->SetTexture("venus.bmp");
+	g_pSphere[3]->SetTexture("earth.bmp");
+	g_pSphere[4]->SetTexture("mars.bmp");
+	g_pSphere[5]->SetTexture("jupiter.bmp");
+	g_pSphere[6]->SetTexture("saturn.bmp");
+	g_pSphere[7]->SetTexture("uranus.bmp");
+	g_pSphere[8]->SetTexture("neptune.bmp");
+	g_pSphere[9]->SetTexture("moon.bmp");
+
+	g_pCircle = new CCircle(g_pD3DDevice);
+
+	return S_OK;
 }
 
 void makeCamera()
 {
-	D3DXMATRIX matView;//
-	D3DXMatrixLookAtLH(&matView, &D3DXVECTOR3(0, 50, -150.0f), 
+	D3DXMATRIX matView;//카메라 회전
+	D3DXMatrixLookAtLH(&matView, &D3DXVECTOR3(-150.f*zValue*sinf(xValue), 50.0f*zValue, -150.0f*zValue*cos(xValue)),
 								&D3DXVECTOR3(0, 0, 0), 
 								&D3DXVECTOR3(0, 1, 0));
 	g_pD3DDevice->SetTransform(D3DTS_VIEW, &matView);//행렬투영(VIEW(카메라), PROJECTION(카메라설정), WORLD(월드좌표))
@@ -109,37 +194,70 @@ void Render()
 	if (g_pD3DDevice == NULL)
 		return;
 
-	g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET,
-		D3DCOLOR_XRGB(0, 0, 0), 1.0f, 2);
+	g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET|D3DCLEAR_ZBUFFER ,
+		D3DCOLOR_XRGB(0, 0, 0), 1.0f, 2);//초기화 색상
 	
 	g_pD3DDevice->BeginScene();//
 
-	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+	
 	makeCamera();
-
-	D3DXMATRIX temp;
-	float rotate = -2000;
+	
+	D3DXMATRIX temp, tempp;
+	float rotate = -2000.0f;
 	//위치, 자전, 공전, 크기, 이전값
-	SetPosition(0, 0, 0, 4, nullptr);
-	g_pMesh->DrawSubset(0);//태양
-	SetPosition(7, 0, rotate, 1, nullptr);
-	g_pMesh->DrawSubset(0);//수
-	SetPosition(14, 0, rotate, 1.5, nullptr);
-	g_pMesh->DrawSubset(0);//금
-	temp=SetPosition(21, 500, rotate, 2, nullptr);
-	g_pMesh->DrawSubset(0);//지
-	SetPosition(1.7, 0, 0, 0.3, &temp);
-	g_pMesh->DrawSubset(0);//달, 지구 자전 영향받음
-	SetPosition(28, 0, rotate, 2, nullptr);
-	g_pMesh->DrawSubset(0);//화
-	SetPosition(42, 0, rotate, 3, nullptr);
-	g_pMesh->DrawSubset(0);//목
-	SetPosition(56, 0, rotate, 3, nullptr);
-	g_pMesh->DrawSubset(0);//토
+	SetPosition(0.0f, 2000.0f, 0.0f, 10.0f, nullptr);
+	g_pD3DDevice->SetMaterial(&g_material);
+	//g_pMesh->DrawSubset(0);//태양
+	//g_pCube->Render();
+	g_pSphere[0]->Render();
+	SetPosition(12.0f, 0.0f, rotate, 0.7f, nullptr);
+	//g_pMesh->DrawSubset(0);//수
+	//g_pCube->Render();
+	g_pSphere[1]->Render();
+	SetPosition(17.0f, 0.0f, rotate*1.1f, 1.0f, nullptr);
+	//g_pMesh->DrawSubset(0);//금
+	//g_pCube->Render();
+	g_pSphere[2]->Render();
+	temp=SetPosition(24.0f, 500.0f, rotate*1.2f, 2.0f, nullptr);
+	//g_pMesh->DrawSubset(0);//지
+	//g_pCube->Render();
+	g_pSphere[3]->Render();
+	SetPosition(1.7f, 0.0f, -300.0f, 0.3f, &temp);
+	//g_pMesh->DrawSubset(0);//달, 지구 자전 영향받음
+	//g_pCube->Render();
+	g_pSphere[9]->Render();
+	SetPosition(32.0f, 0.0f, rotate*1.4f, 2.0f, nullptr);
+	//g_pMesh->DrawSubset(0);//화
+	//g_pCube->Render();
+	g_pSphere[4]->Render();
+	SetPosition(44.0f, 0.0f, rotate*1.7f, 3.0f, nullptr);
+	//g_pMesh->DrawSubset(0);//목
+	//g_pCube->Render();
+	g_pSphere[5]->Render();
+	temp = SetPosition(56.0f, 0.0f, rotate*1.8f, 3.0f, nullptr);
+	//g_pMesh->DrawSubset(0);//토
+	//g_pCube->Render();
+	g_pSphere[6]->Render();
+	D3DXMatrixRotationX(&tempp, D3DX_PI / 2);
+	g_pD3DDevice->SetTransform(D3DTS_WORLD, &(tempp*temp));
+	g_pMesh->DrawSubset(0);//고리
+	SetPosition(62.0f, 0.0f, rotate*2.0f, 1.5f, nullptr);
+	g_pSphere[7]->Render();//천
+	SetPosition(67.0f, 0.0f, rotate*2.2f, 1.5f, nullptr);
+	g_pSphere[8]->Render();//해
 
+	//g_pCircle->Render();
+	//cube//
 	//g_pD3DDevice->SetStreamSource(0, g_pVertexBuffer, 0, sizeof(MY_VERTEX));//소스
 	//g_pD3DDevice->SetFVF(D3DFVF_MYVERTEX);//포맷
 	//g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 4);//그리기
+	//cube//
+	//g_pD3DDevice->SetStreamSource(0, g_pVertexBuffer, 0, sizeof(MY_VERTEX));
+	//g_pD3DDevice->SetFVF(D3DFVF_MYVERTEX);
+	//g_pD3DDevice->DrawPrimitive(D3DPT_LINELIST, 0, 50);
+
+	//g_pTerrain->Render();
+	
 
 	g_pD3DDevice->EndScene();//
 	g_pD3DDevice->Present(0, 0, 0, 0);
@@ -176,9 +294,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	d3dpp.Windowed = TRUE;
 	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;//화면 갱신방법(버림)
 	d3dpp.BackBufferFormat = d3ddm.Format;
+	d3dpp.BackBufferWidth = 1024;
+	d3dpp.BackBufferHeight = 768;
+	d3dpp.EnableAutoDepthStencil = TRUE;
+	d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
 	g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, g_HWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING,
 		&d3dpp, &g_pD3DDevice);//d3ddevice ,하드웨어 엑세스 레이어, 핸들, vertex(3차원좌표 점),  d3d설정, d3ddevice)
-	initVertexBuffer();//
+	initVertexBuffer();/////////////버텍스 초기화
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_DIRECTX));
 
@@ -202,8 +324,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     return (int) msg.wParam;
 }
-
-
 
 //
 //  함수: MyRegisterClass()
@@ -273,50 +393,72 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    switch (message)
-    {
-    case WM_COMMAND:
-        {
-            int wmId = LOWORD(wParam);
-            // 메뉴 선택을 구문 분석합니다.
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
-        }
-        break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다.
-            EndPaint(hWnd, &ps);
-        }
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-	case WM_KEYUP:
+	switch (message)
 	{
-		switch (wParam)//입력키
+		case WM_COMMAND:
 		{
-		case VK_ESCAPE://가상키 esc
-			DestroyWindow(hWnd);
-			return 0;
+			int wmId = LOWORD(wParam);
+			// 메뉴 선택을 구문 분석합니다.
+			switch (wmId)
+			{
+			case IDM_ABOUT:
+				DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+				break;
+			case IDM_EXIT:
+				DestroyWindow(hWnd);
+				break;
+			default:
+				return DefWindowProc(hWnd, message, wParam, lParam);
+			}
 		}
 		break;
+		case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hWnd, &ps);
+			// TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다.
+			EndPaint(hWnd, &ps);
+		}
+		break;
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
+		case WM_KEYUP:
+		{
+			switch (wParam)//입력키
+			{
+				case VK_ESCAPE://가상키 esc
+					DestroyWindow(hWnd);
+					return 0;
+				case VK_RIGHT:
+				{
+					xValue += 0.3;
+					break;
+				}
+				case VK_LEFT:
+				{
+					xValue -= 0.3f;
+					break;
+				}
+			}
+			break;
+		case WM_MOUSEWHEEL:
+		{
+			if ((short)HIWORD(wParam) < 0)//휠다운
+			{
+				zValue += 0.1f;
+			}
+			else//휠업
+			{
+				zValue -= 0.1f;
+			}
+			break;
+		}
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
+		return 0;
 	}
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
 }
 
 // 정보 대화 상자의 메시지 처리기입니다.
