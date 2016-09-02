@@ -154,6 +154,7 @@
     </ClInclude>
     <ClInclude Include="Cuboid.h" />
     <ClInclude Include="directx.h" />
+    <ClInclude Include="Panel.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="SphereCreator.h" />
@@ -170,6 +171,7 @@
     <ClCompile Include="directxx.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Panel.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="SphereCreator.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -186,6 +188,7 @@
   <ItemGroup>
     <Image Include="1.bmp" />
     <Image Include="directx.ico" />
+    <Image Include="EnergyBar.bmp" />
     <Image Include="Grass.bmp" />
     <Image Include="small.ico" />
     <Image Include="solar\sun.bmp" />

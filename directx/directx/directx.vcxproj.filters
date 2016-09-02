@@ -48,6 +48,9 @@
     <ClInclude Include="Circle.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Panel.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -74,6 +77,9 @@
     <ClCompile Include="Circle.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Panel.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="directx.rc">
@@ -97,6 +103,9 @@
       <Filter>리소스 파일</Filter>
     </Image>
     <Image Include="solar\sun.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="EnergyBar.bmp">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>

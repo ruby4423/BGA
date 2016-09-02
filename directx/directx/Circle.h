@@ -13,7 +13,7 @@ public:
 	};
 	LPDIRECT3DDEVICE9 g_pD3DDevice;
 	LPDIRECT3DVERTEXBUFFER9 g_pVertexBuffer;
-	D3DMATERIAL9 m_matMaterial;
+	D3DMATERIAL9 matMaterial;
 	DWORD m_dwNumOfVertices;
 	float radian;
 	////////////////////////////////////

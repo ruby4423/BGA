@@ -9,6 +9,9 @@
 #include "Terrain.h"
 #include "Sphere.h"
 #include "Circle.h"
+#include "Panel.h"
+#include <time.h>
+#include <sstream>
 
 LPDIRECT3D9 g_pD3D = NULL;//LP(포인터)
 LPDIRECT3DDEVICE9 g_pD3DDevice = NULL; //하드웨어 제어, 디바이스 메모리
@@ -21,6 +24,14 @@ CSphere* g_pSphere[10];
 float zValue = 1.0f;
 float xValue = 0.0f;
 CCircle* g_pCircle = NULL;
+CPanel* g_pPanel = NULL;
+LPD3DXFONT g_pFont = NULL;
+
+time_t current_time;
+time_t before_time;
+int frame;
+DWORD dwTime=0, dwPreCount=0, dwCount=0;
+//글꼴, 높이, 넓이, 크기, 이텔릭, 언더라인, 볼드 등등
 //BYTE, WORD, DWORD 데이터형
 
 struct MY_VERTEX //점 데이터형
@@ -46,8 +57,28 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
+void Setup2DCamera()
+{
+
+
+	D3DXMATRIX matOrtho;
+	D3DXMATRIX matIdentity;
+	D3DXMatrixOrthoLH(&matOrtho, 800, 600, 0, 1.0f);
+	D3DXMatrixIdentity(&matIdentity);
+
+	g_pD3DDevice->SetTransform(D3DTS_PROJECTION, &matOrtho);
+	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matIdentity);
+	g_pD3DDevice->SetTransform(D3DTS_VIEW, &matIdentity);
+	g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+}
+
 HRESULT initVertexBuffer()
 {
+	
+	g_pPanel = new CPanel(g_pD3DDevice,265, 64, 800, 700);
+	g_pPanel->SetTexture("EnergyBar.bmp", D3DCOLOR_XRGB(0, 0, 0));
+
 	//VOID* pVertices;
 	//MY_VERTEX ver[] =
 	//{
@@ -65,9 +96,18 @@ HRESULT initVertexBuffer()
 	//memcpy(pVertices, ver, sizeof(ver));
 	//g_pVertexBuffer->Unlock();
 	//return S_OK;
-	
+	//글씨
+	//HFONT hFont = CreateFont(FW_NORMAL, 0, 0, 0, FW_NORMAL, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, L"Arial");//필요업슴
+	D3DXCreateFont(g_pD3DDevice, 60, 0, FW_NORMAL, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, VARIABLE_PITCH, L"Arial", &g_pFont);
+	//시간
+	dwTime = GetTickCount();
+	time(&before_time);
 	g_pD3DDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);//zbuffer
 	//g_pD3DDevice->set
+	g_pD3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+	g_pD3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+	g_pD3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+
 	//////////LIGHT///////
 	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, TRUE);//빛
 	g_pD3DDevice->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(32, 32, 32));
@@ -95,7 +135,7 @@ HRESULT initVertexBuffer()
 	light.Position.z = 0.0f;
 
 	light.Attenuation0 = 1.0f;
-	light.Attenuation1 = 0.05f;
+	light.Attenuation1 = 0.0f;
 	light.Attenuation2 = 0.0f;
 	light.Range = 100.0f;
 	//light.Phi = D3DX_PI*2;
@@ -189,6 +229,7 @@ D3DXMATRIX SetPosition(float trans, float rotate1, float rotate2, float scale, D
 	return matWorld;
 }
 
+
 void Render()
 {
 	if (g_pD3DDevice == NULL)
@@ -199,17 +240,17 @@ void Render()
 	
 	g_pD3DDevice->BeginScene();//
 
-	
 	makeCamera();
-	
 	D3DXMATRIX temp, tempp;
-	float rotate = -2000.0f;
+	float rotate = 0.0f;
 	//위치, 자전, 공전, 크기, 이전값
 	SetPosition(0.0f, 2000.0f, 0.0f, 10.0f, nullptr);
 	g_pD3DDevice->SetMaterial(&g_material);
 	//g_pMesh->DrawSubset(0);//태양
 	//g_pCube->Render();
 	g_pSphere[0]->Render();
+	SetPosition(0.0f, 0.0f, 0.0f, 12.0f, NULL);
+	g_pCircle->Render();
 	SetPosition(12.0f, 0.0f, rotate, 0.7f, nullptr);
 	//g_pMesh->DrawSubset(0);//수
 	//g_pCube->Render();
@@ -246,17 +287,53 @@ void Render()
 	SetPosition(67.0f, 0.0f, rotate*2.2f, 1.5f, nullptr);
 	g_pSphere[8]->Render();//해
 
-	//g_pCircle->Render();
+	
 	//cube//
 	//g_pD3DDevice->SetStreamSource(0, g_pVertexBuffer, 0, sizeof(MY_VERTEX));//소스
 	//g_pD3DDevice->SetFVF(D3DFVF_MYVERTEX);//포맷
 	//g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 4);//그리기
 	//cube//
-	//g_pD3DDevice->SetStreamSource(0, g_pVertexBuffer, 0, sizeof(MY_VERTEX));
-	//g_pD3DDevice->SetFVF(D3DFVF_MYVERTEX);
-	//g_pD3DDevice->DrawPrimitive(D3DPT_LINELIST, 0, 50);
 
 	//g_pTerrain->Render();
+	
+	RECT rect;
+	rect.left = 100; rect.top = 100; rect.right = 1000; rect.bottom = 1000;
+	//g_pFont->DrawTextA(NULL, "태양계", -1, &rect, DT_LEFT, D3DCOLOR_XRGB(255, 255, 255));
+
+	DWORD dwNowTime = GetTickCount();
+	float temp0 = (float)(dwNowTime - dwTime) / 1000.0f;
+	temp0 = 1.0f / temp0;
+	//if (dwNowTime - dwTime > 1000)
+	//{
+	//	dwTime = GetTickCount();
+	//	dwPreCount = dwCount;
+	//	dwCount = 0;
+	//}
+	//dwCount++;
+	dwTime = GetTickCount();
+	char text[256] = {};
+	sprintf_s(text, "%.2f", temp0);
+	g_pFont->DrawTextA(NULL, text, -1, &rect, DT_LEFT, D3DCOLOR_XRGB(255, 255, 255));
+
+
+	//time(&current_time);
+	//std::stringstream stream;
+	//float temp = (float)current_time - before_time / 1000.0f;
+
+	//stream << current_time;
+	//g_pFont->DrawTextA(NULL, stream.str().c_str(), -1, &rect, DT_LEFT, D3DCOLOR_XRGB(255, 255, 255));
+	//if (current_time - before_time == 1)
+	//{
+	//	stream << frame;
+	//	frame = 0;
+	//}
+	//g_pFont->DrawTextA(NULL, stream.str().c_str(), -1, &rect, DT_LEFT, D3DCOLOR_XRGB(255, 255, 255));
+	//frame++;
+	//before_time = current_time;
+
+	//Setup2DCamera();
+	//g_pPanel->MoveTo(300, 500);
+	//g_pPanel->Render();
 	
 
 	g_pD3DDevice->EndScene();//
@@ -440,6 +517,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					xValue -= 0.3f;
 					break;
 				}
+				case VK_UP:
+					g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, TRUE); break;
+				case VK_DOWN:
+					g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE); break;
 			}
 			break;
 		case WM_MOUSEWHEEL:
